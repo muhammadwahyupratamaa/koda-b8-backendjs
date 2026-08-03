@@ -66,7 +66,35 @@ async function login(req, res) {
   }
 }
 
+async function forgotPassword(req, res) {
+  try {
+    const { email, newPassword } = req.body;
+    const user = await userModel.findByEmail(email);
+    if (!user) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "email not found",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const updateUser = await userModel.updatePassword(email, hashedPassword);
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      message: "Password Updated Successfully",
+      data: updateUser,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 export default {
   register,
   login,
+  forgotPassword,
 };
