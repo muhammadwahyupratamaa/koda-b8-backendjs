@@ -1,6 +1,7 @@
 import userModel from "../models/user.model.js";
 import { constants } from "node:http2";
 import bcrypt from "bcrypt";
+import libJwt from "../lib/jwt.js";
 
 async function register(req, res) {
   try {
@@ -28,6 +29,44 @@ async function register(req, res) {
   }
 }
 
+async function login(req, res) {
+  try {
+    const { email, password } = req.body;
+    const user = await userModel.findByEmail(email);
+
+    if (!user) {
+      return res.status(constants.HTTP_STATUS_UNAUTHORIZED).json({
+        success: false,
+        message: "Email or password is invalid",
+      });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(constants.HTTP_STATUS_UNAUTHORIZED).json({
+        success: false,
+        message: "Email or password invalid",
+      });
+    }
+
+    const token = libJwt.sign({
+      id: user.id,
+      email: user.email,
+    });
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      message: "Login success",
+      token,
+    });
+  } catch (error) {
+    res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 export default {
   register,
+  login,
 };
