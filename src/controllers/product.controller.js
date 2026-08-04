@@ -41,7 +41,25 @@ async function getById(req, res) {
   }
 }
 
+async function getByCategory(req, res) {
+  try {
+    const { id } = req.params;
+    const products = await productModel.getByCategory(id);
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 export default {
   getAll,
   getById,
+  getByCategory,
 };
