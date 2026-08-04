@@ -18,3 +18,18 @@ CREATE TABLE "products"(
 );
 
 SELECT * FROM "products";
+
+INSERT INTO products
+(
+    name,
+    brand,
+    price,
+    stock
+)
+VALUES
+(
+    'Running Shoes',
+    'RunMax',
+    699000,
+    42
+);
