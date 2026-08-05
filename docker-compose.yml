@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: brilianshop-postgres
+    restart: always
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1231
+      POSTGRES_DB: brilian_shop
+
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d brilian_shop"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: migrate/migrate
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    volumes:
+      - ./migrations:/migrations:z
+
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://postgres:1231@postgres:5432/brilian_shop?sslmode=disable",
+        "up",
+      ]
+
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: brilianshop-backend
+    restart: always
+
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: 1231
+      DB_NAME: brilian_shop
+      JWT_KEY: rahasia
+
+volumes:
+  postgres_data:
