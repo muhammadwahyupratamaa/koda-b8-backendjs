@@ -3,7 +3,7 @@ run-name: Running build images
 on:
   push:
     tags:
-      - v.*
+      - 'v*'
 jobs:
   build-image:
     runs-on: ubuntu-latest
