@@ -1,0 +1,6 @@
+ALTER TABLE "users" ADD COLUMN phone VARCHAR(20);
+ALTER TABLE "users" ADD COLUMN birth_date VARCHAR(100);
+ALTER TABLE "users" ADD COLUMN gender VARCHAR(10);
+ALTER TABLE "users" ADD COLUMN avatar_url TEXT;
+
+SELECT * FROM "users";
