@@ -1,11 +1,12 @@
 import pool from "./config/db.js";
 import express from "express";
 import routes from "./routes/index.js";
-
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger.js";
 
 const app = express();
-app.use(express.json())
-app.use(routes)
+app.use(express.json());
+app.use(routes);
 
 try {
   await pool.query("SELECT NOW()");
@@ -22,6 +23,8 @@ app.get("/health", (req, res) => {
     message: "Server is running",
   });
 });
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
