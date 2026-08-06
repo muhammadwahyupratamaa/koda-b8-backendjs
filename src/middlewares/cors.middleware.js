@@ -7,14 +7,21 @@ import { constants } from "node:http2";
  * @param {function()} next
  * @returns
  */
-function coreMiddelware(req, res, next) {
+function corsMiddleware(req, res, next) {
+  console.log("CORS:", req.method, req.url);
+
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-  res.setHeader("Access-Control-Allow-Method", "FETCH, PUT, GET, POST, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "Content-type, Authorization");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
-    res.sendStatus(constants.HTTP_STATUS_NO_CONTENT);
-    return;
+    return res.sendStatus(204);
   }
+
   next();
 }
+
+export default corsMiddleware;

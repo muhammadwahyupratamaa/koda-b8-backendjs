@@ -3,9 +3,13 @@ import express from "express";
 import routes from "./routes/index.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
+import corsmiddleware from "./middlewares/cors.middleware.js";
 
 const app = express();
+
+app.use(corsmiddleware);
 app.use(express.json());
+
 app.use(routes);
 
 try {
