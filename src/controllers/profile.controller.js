@@ -2,6 +2,12 @@ import { constants } from "node:http2";
 import profileModel from "../models/profile.model.js";
 import bcrypt from "bcrypt";
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getProfile(req, res) {
   try {
     const userId = req.user.id;
@@ -19,6 +25,12 @@ async function getProfile(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function updateProfile(req, res) {
   try {
     const userId = req.user.id;
@@ -46,6 +58,12 @@ async function updateProfile(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function updatePassword(req, res) {
   try {
     const userId = req.user.id;

@@ -1,6 +1,12 @@
 import { constants } from "node:http2";
 import cartModel from "../models/cart.model.js";
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function addProduct(req, res) {
   try {
     const userId = req.user.id;
@@ -26,6 +32,12 @@ async function addProduct(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function updateQuantity(req, res) {
   try {
     const userId = req.user.id;
@@ -55,6 +67,12 @@ async function updateQuantity(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function removeProduct(req, res) {
   try {
     const userId = req.user.id;
@@ -83,6 +101,12 @@ async function removeProduct(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getAll(req, res) {
   try {
     const userId = req.user.id;

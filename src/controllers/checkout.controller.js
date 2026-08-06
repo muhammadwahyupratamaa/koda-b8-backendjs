@@ -2,6 +2,12 @@ import { constants } from "node:http2";
 import cartModel from "../models/cart.model.js";
 import checkoutModel from "../models/checkout.model.js";
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function checkout(req, res) {
   try {
     const userId = req.user.id;
@@ -54,6 +60,12 @@ async function checkout(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getOrders(req, res) {
   try {
     const userId = req.user.id;

@@ -3,6 +3,12 @@ import { constants } from "node:http2";
 import bcrypt from "bcrypt";
 import libJwt from "../lib/jwt.js";
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function register(req, res) {
   try {
     const { name, email, password } = req.body;
@@ -29,6 +35,12 @@ async function register(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -66,6 +78,12 @@ async function login(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function forgotPassword(req, res) {
   try {
     const { email, newPassword } = req.body;

@@ -1,6 +1,14 @@
 import categoryModel from "../models/category.model.js";
 import { constants } from "node:http2";
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getAll(req, res) {
   try {
     const categories = await categoryModel.getAll();

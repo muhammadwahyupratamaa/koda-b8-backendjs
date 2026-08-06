@@ -1,6 +1,12 @@
 import wishlistModel from "../models/wishlist.model.js";
 import { constants } from "node:http2";
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function addProduct(req, res) {
   try {
     const userId = req.user.id;
@@ -19,6 +25,12 @@ async function addProduct(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function removeProduct(req, res) {
   try {
     const userId = req.user.id;
@@ -45,6 +57,12 @@ async function removeProduct(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getAll(req, res) {
   try {
     const userId = req.user.id;

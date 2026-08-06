@@ -1,6 +1,12 @@
 import { constants } from "node:http2";
 import productModel from "../models/product.model.js";
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getAll(req, res) {
   try {
     const products = await productModel.getAll();
@@ -17,6 +23,12 @@ async function getAll(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getById(req, res) {
   try {
     const { id } = req.params;
@@ -41,6 +53,12 @@ async function getById(req, res) {
   }
 }
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getByCategory(req, res) {
   try {
     const { id } = req.params;
