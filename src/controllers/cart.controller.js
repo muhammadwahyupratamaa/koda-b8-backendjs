@@ -10,7 +10,7 @@ import cartModel from "../models/cart.model.js";
 async function addProduct(req, res) {
   try {
     const userId = req.user.id;
-    const { productId } = req.body;
+    const { productId,color } = req.body;
 
     let cart = await cartModel.getCart(userId);
 
@@ -18,7 +18,7 @@ async function addProduct(req, res) {
       cart = await cartModel.createCart(userId);
     }
 
-    const cartItem = await cartModel.addProduct(cart.id, productId);
+    const cartItem = await cartModel.addProduct(cart.id, productId , color);
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
