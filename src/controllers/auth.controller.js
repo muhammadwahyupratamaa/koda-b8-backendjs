@@ -62,13 +62,17 @@ async function login(req, res) {
 
     const token = libJwt.sign({
       id: user.id,
-      email: user.email,
     });
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
       message: "Login success",
       token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
     });
   } catch (error) {
     res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
