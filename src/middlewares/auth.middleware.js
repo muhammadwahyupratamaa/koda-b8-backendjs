@@ -1,6 +1,13 @@
 import { constants } from "node:http2";
 import libJwt from "../lib/jwt.js";
 
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {function()} next
+ * @returns
+ */
 function authMiddleware(req, res, next) {
   const authorization = req.headers.authorization;
   console.log(req.headers.authorization);
