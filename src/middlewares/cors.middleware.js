@@ -8,19 +8,16 @@ import { constants } from "node:http2";
  * @returns
  */
 function corsMiddleware(req, res, next) {
-  console.log("CORS:", req.method, req.url);
-
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
   res.setHeader(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "GET, POST, PUT, PATCH, DELETE",
   );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
   if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
+    res.sendStatus(constants.HTTP_STATUS_NO_CONTENT);
+    return;
   }
-
   next();
 }
 
