@@ -9,10 +9,6 @@ const app = express();
 // console.log(corsmiddleware);
 app.use(express.json());
 
-app.use((req, res, next) => {
-  console.log(req)
-  next()
-})
 app.use(corsMiddleware);
 app.use(routes);
 
