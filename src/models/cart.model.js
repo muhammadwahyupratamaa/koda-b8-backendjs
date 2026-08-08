@@ -25,28 +25,35 @@ async function createCart(userId) {
 }
 
 async function addProduct(cartId, productId, color) {
+  const normalizedColor = color ?? null;
+
   const checkQuery = `
     SELECT *
-  FROM cart_items
-  WHERE cart_id = $1
-  AND product_id = $2
-  AND color = $3;
+    FROM cart_items
+    WHERE cart_id = $1
+      AND product_id = $2
+      AND (
+        color = $3
+        OR (color IS NULL AND $3 IS NULL)
+      );
   `;
 
-  const check = await pool.query(checkQuery, [cartId, productId, color]);
+  const check = await pool.query(checkQuery, [
+    cartId,
+    productId,
+    normalizedColor,
+  ]);
 
   if (check.rows.length > 0) {
     const updateQuery = `
       UPDATE cart_items
-    SET quantity = quantity + 1,
-      updated_at = NOW()
-    WHERE cart_id = $1
-    AND product_id = $2
-    AND color = $3
-    RETURNING *;
+      SET quantity = quantity + 1,
+          updated_at = NOW()
+      WHERE id = $1
+      RETURNING *;
     `;
 
-    const updated = await pool.query(updateQuery, [cartId, productId, color]);
+    const updated = await pool.query(updateQuery, [check.rows[0].id]);
 
     return updated.rows[0];
   }
@@ -57,7 +64,11 @@ async function addProduct(cartId, productId, color) {
     RETURNING *;
   `;
 
-  const inserted = await pool.query(insertQuery, [cartId, productId, color]);
+  const inserted = await pool.query(insertQuery, [
+    cartId,
+    productId,
+    normalizedColor,
+  ]);
 
   return inserted.rows[0];
 }
