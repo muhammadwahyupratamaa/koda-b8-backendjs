@@ -35,6 +35,7 @@ async function updateProfile(req, res) {
   try {
     const userId = req.user.id;
     const { name, email, phone, birthDate, gender, avatarUrl } = req.body;
+
     const profile = await profileModel.updateProfile(
       userId,
       name,
@@ -51,6 +52,13 @@ async function updateProfile(req, res) {
       data: profile,
     });
   } catch (error) {
+    if (error.code === "23505") {
+      return res.status(constants.HTTP_STATUS_CONFLICT).json({
+        success: false,
+        message: "Email sudah digunakan",
+      });
+    }
+
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,
