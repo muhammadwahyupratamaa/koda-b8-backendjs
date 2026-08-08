@@ -1,34 +1,60 @@
 import pool from "../config/db.js";
 
-async function getCartItems(cartId) {
+async function getCartItems(cartId, client = pool) {
   const query = `
     SELECT
       ci.product_id,
       ci.quantity,
-      p.price
+      p.price,
+      p.stock
     FROM cart_items ci
     JOIN products p
       ON ci.product_id = p.id
-    WHERE ci.cart_id = $1;
+    WHERE ci.cart_id = $1
+    FOR UPDATE OF p;
   `;
 
-  const result = await pool.query(query, [cartId]);
+  const result = await client.query(query, [cartId]);
 
   return result.rows;
 }
 
-async function createOrder(userId, total) {
+async function createOrder(
+  userId,
+  total,
+  shippingAddress,
+  paymentMethod,
+  client = pool,
+) {
   const query = `
-    INSERT INTO orders (user_id, total)
-    VALUES ($1, $2)
+    INSERT INTO orders (
+      user_id,
+      total,
+      shipping_address,
+      payment_method
+    )
+    VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
 
-  const result = await pool.query(query, [userId, total]);
+  const result = await client.query(query, [
+    userId,
+    total,
+    shippingAddress,
+    paymentMethod,
+  ]);
 
   return result.rows[0];
 }
-async function createOrderItem(orderId, productId, quantity, price, subtotal) {
+
+async function createOrderItem(
+  orderId,
+  productId,
+  quantity,
+  price,
+  subtotal,
+  client = pool,
+) {
   const query = `
     INSERT INTO order_items
     (
@@ -38,11 +64,11 @@ async function createOrderItem(orderId, productId, quantity, price, subtotal) {
       price,
       subtotal
     )
-    VALUES ($1,$2,$3,$4,$5)
+    VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
 
-  const result = await pool.query(query, [
+  const result = await client.query(query, [
     orderId,
     productId,
     quantity,
@@ -53,13 +79,33 @@ async function createOrderItem(orderId, productId, quantity, price, subtotal) {
   return result.rows[0];
 }
 
-async function clearCart(cartId) {
+async function decreaseStock(
+  productId,
+  quantity,
+  client = pool,
+) {
+  const query = `
+    UPDATE products
+    SET stock = stock - $2
+    WHERE id = $1
+    RETURNING *;
+  `;
+
+  const result = await client.query(query, [
+    productId,
+    quantity,
+  ]);
+
+  return result.rows[0];
+}
+
+async function clearCart(cartId, client = pool) {
   const query = `
     DELETE FROM cart_items
     WHERE cart_id = $1;
   `;
 
-  await pool.query(query, [cartId]);
+  await client.query(query, [cartId]);
 }
 
 async function getOrders(userId) {
@@ -67,6 +113,7 @@ async function getOrders(userId) {
     SELECT
       o.id,
       o.total,
+      o.status,
       o.created_at,
 
       oi.quantity,
@@ -97,11 +144,19 @@ async function getOrders(userId) {
     let order = orders.find((o) => o.id === row.id);
 
     if (!order) {
+      let status = "Diproses";
+
+      if (row.status === "shipped") {
+        status = "Dikirim";
+      } else if (row.status === "delivered") {
+        status = "Terkirim";
+      }
+
       order = {
         id: row.id,
         total: row.total,
         created_at: row.created_at,
-        status: "Diproses",
+        status,
         items: [],
       };
 
@@ -124,6 +179,7 @@ export default {
   getCartItems,
   createOrder,
   createOrderItem,
+  decreaseStock,
   clearCart,
   getOrders,
 };
