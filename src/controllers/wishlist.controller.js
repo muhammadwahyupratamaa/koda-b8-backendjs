@@ -18,6 +18,13 @@ async function addProduct(req, res) {
       data: wishlist,
     });
   } catch (error) {
+    if (error.code === "23505") {
+      return res.status(constants.HTTP_STATUS_CONFLICT).json({
+        success: false,
+        message: "Produk sudah ada di wishlist",
+      });
+    }
+
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,
