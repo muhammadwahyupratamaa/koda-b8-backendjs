@@ -24,9 +24,13 @@ async function checkout(req, res) {
       });
     }
 
-    const cartItems = await checkoutModel.getCartItems(cart.id);
+    await client.query("BEGIN");
+
+    const cartItems = await checkoutModel.getCartItems(cart.id, client);
 
     if (cartItems.length === 0) {
+      await client.query("ROLLBACK");
+
       return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
         success: false,
         message: "Cart is empty",
@@ -35,9 +39,11 @@ async function checkout(req, res) {
 
     for (const item of cartItems) {
       if (item.stock < item.quantity) {
+        await client.query("ROLLBACK");
+
         return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
           success: false,
-          message: `Stock produk tidak cukup`,
+          message: "Stock produk tidak cukup",
         });
       }
     }
@@ -47,8 +53,6 @@ async function checkout(req, res) {
     for (const item of cartItems) {
       total += Number(item.price) * item.quantity;
     }
-
-    await client.query("BEGIN");
 
     const order = await checkoutModel.createOrder(
       userId,
