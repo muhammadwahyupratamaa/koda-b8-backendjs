@@ -10,7 +10,7 @@ import cartModel from "../models/cart.model.js";
 async function addProduct(req, res) {
   try {
     const userId = req.user.id;
-    const { productId,color } = req.body;
+    const { productId, color } = req.body;
 
     let cart = await cartModel.getCart(userId);
 
@@ -18,13 +18,20 @@ async function addProduct(req, res) {
       cart = await cartModel.createCart(userId);
     }
 
-    const cartItem = await cartModel.addProduct(cart.id, productId , color);
+    const cartItem = await cartModel.addProduct(cart.id, productId, color);
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
       data: cartItem,
     });
   } catch (error) {
+    if (error.code === "23505") {
+      return res.status(constants.HTTP_STATUS_CONFLICT).json({
+        success: false,
+        message: "Produk sudah ada di keranjang",
+      });
+    }
+
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,
