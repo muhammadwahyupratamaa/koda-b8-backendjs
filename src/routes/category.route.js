@@ -11,7 +11,7 @@ const router = Router();
  */
 
 /**
- * @swagger
+ * @openapi
  * /categories:
  *   get:
  *     summary: Get all categories
