@@ -25,6 +25,20 @@ async function addProduct(req, res) {
       data: cartItem,
     });
   } catch (error) {
+    if (error.code === "PRODUCT_NOT_FOUND") {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "Produk tidak ditemukan",
+      });
+    }
+
+    if (error.code === "OUT_OF_STOCK" || error.code === "STOCK_INSUFFICIENT") {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     if (error.code === "23505") {
       return res.status(constants.HTTP_STATUS_CONFLICT).json({
         success: false,
@@ -60,14 +74,30 @@ async function updateQuantity(req, res) {
       });
     }
 
-    const item = await cartModel.updateQuantity(cart.id, cartItemId, quantity);
+    const cartItem = await cartModel.getCartItem(cart.id, cartItemId);
 
-    if (!item) {
+    if (!cartItem) {
       return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
         success: false,
         message: "Cart item not found",
       });
     }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "Quantity harus lebih dari 0",
+      });
+    }
+
+    if (quantity > cartItem.stock) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: `Stock produk hanya tersedia ${cartItem.stock}`,
+      });
+    }
+
+    const item = await cartModel.updateQuantity(cart.id, cartItemId, quantity);
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,

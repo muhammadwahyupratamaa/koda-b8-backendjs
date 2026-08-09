@@ -27,6 +27,27 @@ async function createCart(userId) {
 async function addProduct(cartId, productId, color) {
   const normalizedColor = color ?? null;
 
+  const productQuery = `
+    SELECT id, stock
+    FROM products
+    WHERE id = $1;
+  `;
+
+  const productResult = await pool.query(productQuery, [productId]);
+  const product = productResult.rows[0];
+
+  if (!product) {
+    const error = new Error("Produk tidak ditemukan");
+    error.code = "PRODUCT_NOT_FOUND";
+    throw error;
+  }
+
+  if (product.stock <= 0) {
+    const error = new Error("Stock produk habis");
+    error.code = "OUT_OF_STOCK";
+    throw error;
+  }
+
   const checkQuery = `
     SELECT *
     FROM cart_items
@@ -45,6 +66,14 @@ async function addProduct(cartId, productId, color) {
   ]);
 
   if (check.rows.length > 0) {
+    const currentItem = check.rows[0];
+
+    if (currentItem.quantity >= product.stock) {
+      const error = new Error("Jumlah produk sudah mencapai stock");
+      error.code = "STOCK_INSUFFICIENT";
+      throw error;
+    }
+
     const updateQuery = `
       UPDATE cart_items
       SET quantity = quantity + 1,
@@ -53,13 +82,19 @@ async function addProduct(cartId, productId, color) {
       RETURNING *;
     `;
 
-    const updated = await pool.query(updateQuery, [check.rows[0].id]);
+    const updated = await pool.query(updateQuery, [
+      currentItem.id,
+    ]);
 
     return updated.rows[0];
   }
 
   const insertQuery = `
-    INSERT INTO cart_items (cart_id, product_id, color)
+    INSERT INTO cart_items (
+      cart_id,
+      product_id,
+      color
+    )
     VALUES ($1, $2, $3)
     RETURNING *;
   `;
@@ -72,6 +107,7 @@ async function addProduct(cartId, productId, color) {
 
   return inserted.rows[0];
 }
+
 async function updateQuantity(cartId, cartItemId, quantity) {
   const query = `
     UPDATE cart_items ci
@@ -87,6 +123,23 @@ async function updateQuantity(cartId, cartItemId, quantity) {
   `;
 
   const result = await pool.query(query, [cartId, cartItemId, quantity]);
+
+  return result.rows[0];
+}
+
+async function getCartItem(cartId, cartItemId) {
+  const query = `
+    SELECT
+      ci.*,
+      p.stock
+    FROM cart_items ci
+    JOIN products p
+      ON ci.product_id = p.id
+    WHERE ci.cart_id = $1
+      AND ci.id = $2;
+  `;
+
+  const result = await pool.query(query, [cartId, cartItemId]);
 
   return result.rows[0];
 }
@@ -138,6 +191,7 @@ export default {
   createCart,
   addProduct,
   updateQuantity,
+  getCartItem,
   removeProduct,
   getAll,
 };
