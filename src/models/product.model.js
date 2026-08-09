@@ -2,7 +2,14 @@ import pool from "../config/db.js";
 
 async function getAll() {
   const query = `
-    SELECT * FROM products ORDER BY id DESC`;
+    SELECT
+      p.*,
+      c.name AS category
+    FROM products p
+    JOIN categories c
+      ON p.category_id = c.id
+    ORDER BY p.id DESC
+  `;
 
   const result = await pool.query(query);
   return result.rows;
