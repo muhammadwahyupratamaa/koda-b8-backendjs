@@ -43,8 +43,16 @@ async function register(req, res) {
  */
 async function login(req, res) {
   try {
+    // console.log("LOGIN 1: request masuk");
+
     const { email, password } = req.body;
+
+    // console.log("LOGIN 2: body =", email);
+
     const user = await userModel.findByEmail(email);
+
+    // console.log("LOGIN 3: findByEmail selesai");
+    // console.log("LOGIN 4: user =", user);
 
     if (!user) {
       return res.status(constants.HTTP_STATUS_UNAUTHORIZED).json({
@@ -52,7 +60,13 @@ async function login(req, res) {
         message: "Email or password is invalid",
       });
     }
+
+    // console.log("LOGIN 5: mulai bcrypt");
+
     const isMatch = await bcrypt.compare(password, user.password);
+
+    // console.log("LOGIN 6: bcrypt selesai =", isMatch);
+
     if (!isMatch) {
       return res.status(constants.HTTP_STATUS_UNAUTHORIZED).json({
         success: false,
@@ -60,9 +74,13 @@ async function login(req, res) {
       });
     }
 
+    // console.log("LOGIN 7: mulai JWT");
+
     const token = libJwt.sign({
       id: user.id,
     });
+
+    // console.log("LOGIN 8: JWT selesai");
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
@@ -75,7 +93,9 @@ async function login(req, res) {
       },
     });
   } catch (error) {
-    res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+    console.error("LOGIN ERROR:", error);
+
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,
     });
