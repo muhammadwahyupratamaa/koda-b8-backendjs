@@ -72,35 +72,37 @@ async function addProduct(cartId, productId, color) {
 
   return inserted.rows[0];
 }
-
-async function updateQuantity(cartId, productId, quantity) {
+async function updateQuantity(cartId, cartItemId, quantity) {
   const query = `
-    UPDATE cart_items
+    UPDATE cart_items ci
     SET quantity = $3,
         updated_at = NOW()
-    WHERE cart_id = $1
-      AND product_id = $2
-    RETURNING *;
+    FROM products p
+    WHERE ci.cart_id = $1
+      AND ci.id = $2
+      AND ci.product_id = p.id
+      AND $3 > 0
+      AND $3 <= p.stock
+    RETURNING ci.*;
   `;
 
-  const result = await pool.query(query, [cartId, productId, quantity]);
+  const result = await pool.query(query, [cartId, cartItemId, quantity]);
 
   return result.rows[0];
 }
 
-async function removeProduct(cartId, productId) {
+async function removeProduct(cartId, cartItemId) {
   const query = `
     DELETE FROM cart_items
     WHERE cart_id = $1
-      AND product_id = $2
+      AND id = $2
     RETURNING *;
   `;
 
-  const result = await pool.query(query, [cartId, productId]);
+  const result = await pool.query(query, [cartId, cartItemId]);
 
   return result.rows[0];
 }
-
 async function getAll(cartId) {
   const query = `
     SELECT
