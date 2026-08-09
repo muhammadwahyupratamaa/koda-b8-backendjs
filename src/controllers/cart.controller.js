@@ -48,7 +48,7 @@ async function addProduct(req, res) {
 async function updateQuantity(req, res) {
   try {
     const userId = req.user.id;
-    const { productId } = req.params;
+    const { cartItemId } = req.params;
     const { quantity } = req.body;
 
     const cart = await cartModel.getCart(userId);
@@ -60,7 +60,14 @@ async function updateQuantity(req, res) {
       });
     }
 
-    const item = await cartModel.updateQuantity(cart.id, productId, quantity);
+    const item = await cartModel.updateQuantity(cart.id, cartItemId, quantity);
+
+    if (!item) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "Cart item not found",
+      });
+    }
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
@@ -83,7 +90,7 @@ async function updateQuantity(req, res) {
 async function removeProduct(req, res) {
   try {
     const userId = req.user.id;
-    const { productId } = req.params;
+    const { cartItemId } = req.params;
 
     const cart = await cartModel.getCart(userId);
 
@@ -94,7 +101,14 @@ async function removeProduct(req, res) {
       });
     }
 
-    const item = await cartModel.removeProduct(cart.id, productId);
+    const item = await cartModel.removeProduct(cart.id, cartItemId);
+
+    if (!item) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "Cart item not found",
+      });
+    }
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,

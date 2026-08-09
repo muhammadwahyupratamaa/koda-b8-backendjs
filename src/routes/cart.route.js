@@ -65,7 +65,7 @@ router.get("/", cartController.getAll);
 
 /**
  * @openapi
- * /cart/{productId}:
+ * /cart/{cardItemId}:
  *   patch:
  *     summary: Update product quantity
  *     description: Update the quantity of a product in the shopping cart.
@@ -74,7 +74,7 @@ router.get("/", cartController.getAll);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: productId
+ *         name: cardItemId
  *         required: true
  *         schema:
  *           type: integer
@@ -101,11 +101,11 @@ router.get("/", cartController.getAll);
  *       500:
  *         description: Internal server error
  */
-router.patch("/:productId", cartController.updateQuantity);
+router.patch("/:cartItemId", cartController.updateQuantity);
 
 /**
  * @openapi
- * /cart/{productId}:
+ * /cart/{cartItemId}:
  *   delete:
  *     summary: Remove product from shopping cart
  *     description: Remove a product from the authenticated user's shopping cart.
@@ -114,7 +114,7 @@ router.patch("/:productId", cartController.updateQuantity);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: productId
+ *         name: cartItemId
  *         required: true
  *         schema:
  *           type: integer
@@ -129,6 +129,6 @@ router.patch("/:productId", cartController.updateQuantity);
  *       500:
  *         description: Internal server error
  */
-router.delete("/:productId", cartController.removeProduct);
+router.delete("/:cartItemId", cartController.removeProduct);
 
 export default router;
