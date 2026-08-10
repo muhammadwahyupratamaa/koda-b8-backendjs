@@ -36,7 +36,7 @@ async function updateProfile(
       phone = $4,
       birth_date = $5,
       gender = $6,
-      avatar_url = $7
+      avatar_url = COALESCE($7, avatar_url)
     WHERE id = $1
     RETURNING
       id,
