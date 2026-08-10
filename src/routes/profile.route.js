@@ -2,6 +2,7 @@ import { Router } from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import profileController from "../controllers/profile.controller.js";
 import upload from "../middlewares/upload.middleware.js";
+import uploadError from "../middlewares/uploadError.middleware.js";
 
 const router = Router();
 router.use(authMiddleware);
@@ -75,7 +76,12 @@ router.get("/", profileController.getProfile);
  *       500:
  *         description: Internal server error
  */
-router.put("/", upload.single("avatar"), profileController.updateProfile);
+router.put(
+  "/",
+  upload.single("avatar"),
+  uploadError,
+  profileController.updateProfile,
+);
 
 /**
  * @openapi
