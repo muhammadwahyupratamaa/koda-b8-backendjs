@@ -34,7 +34,12 @@ async function getProfile(req, res) {
 async function updateProfile(req, res) {
   try {
     const userId = req.user.id;
-    const { name, email, phone, birthDate, gender, avatarUrl } = req.body;
+
+    const { name, email, phone, birthDate, gender } = req.body;
+
+    const avatarUrl = req.file
+      ? `/uploads/profile/${req.file.filename}`
+      : undefined;
 
     const profile = await profileModel.updateProfile(
       userId,
