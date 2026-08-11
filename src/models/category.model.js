@@ -1,11 +1,13 @@
 import pool from "../config/db.js";
+import Category from "./category.js";
 
 async function getAll() {
   const query = `
     SELECT * FROM categories ORDER BY id ASC`;
 
-  const result = await pool.query(query);
-  return result.rows;
+  return await Category.findAll({
+    order:[["id", "ASC"]]
+  })
 }
 
 export default {
