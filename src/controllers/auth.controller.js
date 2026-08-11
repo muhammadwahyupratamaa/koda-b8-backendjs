@@ -78,6 +78,7 @@ async function login(req, res) {
 
     const token = libJwt.sign({
       id: user.id,
+      role: user.role,
     });
 
     // console.log("LOGIN 8: JWT selesai");
@@ -90,6 +91,7 @@ async function login(req, res) {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {

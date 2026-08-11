@@ -7,6 +7,7 @@ import cartRoute from "./cart.route.js";
 import checkoutRoute from "./checkout.route.js";
 import profileRoute from "./profile.route.js";
 import addressRoute from "./address.route.js";
+import adminRoute from "./admin.route.js";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/cart", cartRoute);
 router.use("/profile", profileRoute);
 router.use("/checkout", checkoutRoute);
 router.use("/addresses", addressRoute);
+router.use("/admin", adminRoute)
 
 export default router;
