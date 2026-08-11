@@ -1,0 +1,11 @@
+import path from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+require("@babel/register");
+
+export const config = path.resolve("src", "config", "db.json");
+export const migrationsPath = path.resolve("src", "migrations");
+export const seedersPath = path.resolve("src", "seeders");
+export const modelsPath = path.resolve("src", "models");
