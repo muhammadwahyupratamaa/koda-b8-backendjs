@@ -4,7 +4,7 @@ import adminMiddleware from "../middlewares/admin.middleware.js";
 import adminController from "../controllers/admin.controller.js";
 
 const router = express.Router();
-router.use(authMiddleware);
+router.use(authMiddleware, adminMiddleware);
 
 router.get("/test", adminMiddleware, (req, res) => {
   res.json({
@@ -14,7 +14,8 @@ router.get("/test", adminMiddleware, (req, res) => {
   });
 });
 
-router.get("/products", adminMiddleware, adminController.getProducts);
-router.post("/products", adminMiddleware, adminController.createProduct);
+router.get("/products", adminController.getProducts);
+router.post("/products", adminController.createProduct);
+router.put("/products/:id", adminController.updateProduct);
 
 export default router;
