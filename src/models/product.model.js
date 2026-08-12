@@ -1,15 +1,20 @@
 // import Category from "./category.js";
 // import Product from "./product.js";
 
+import sequelize from "../config/sequelize.js";
 import { Category, Product } from "./index.js";
 
 async function getAll() {
   return await Product.findAll({
+    attributes: {
+      include: [[sequelize.col("Category.name"), "category"]],
+    },
     include: {
       model: Category,
-      attributes: ["name"],
+      attributes: [],
     },
     order: [["id", "DESC"]],
+    raw: true,
   });
 }
 
