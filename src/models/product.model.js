@@ -19,10 +19,7 @@ async function getAll() {
 }
 
 async function getById(id) {
-  const query = `
-    SELECT * FROM products WHERE id=$1`;
-  const result = await pool.query(query, [id]);
-  return result.rows[0];
+  return await Product.findByPk(id);
 }
 
 async function getByCategory(categoryId) {
