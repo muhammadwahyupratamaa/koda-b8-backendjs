@@ -1,18 +1,16 @@
-import pool from "../config/db.js";
+// import Category from "./category.js";
+// import Product from "./product.js";
+
+import { Category, Product } from "./index.js";
 
 async function getAll() {
-  const query = `
-    SELECT
-      p.*,
-      c.name AS category
-    FROM products p
-    JOIN categories c
-      ON p.category_id = c.id
-    ORDER BY p.id DESC
-  `;
-
-  const result = await pool.query(query);
-  return result.rows;
+  return await Product.findAll({
+    include: {
+      model: Category,
+      attributes: ["name"],
+    },
+    order: [["id", "DESC"]],
+  });
 }
 
 async function getById(id) {
