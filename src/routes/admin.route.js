@@ -15,5 +15,6 @@ router.get("/test", adminMiddleware, (req, res) => {
 });
 
 router.get("/products", adminMiddleware, adminController.getProducts);
+router.post("/products", adminMiddleware, adminController.createProduct);
 
 export default router;
