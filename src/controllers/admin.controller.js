@@ -96,8 +96,36 @@ async function updateProduct(req, res) {
     });
   }
 }
+
+async function deleteProduct(req, res) {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByPk(id);
+
+    if (!product) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "Product Not Found",
+      });
+    }
+
+    await product.destroy();
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      message: " Delete Product Successfully",
+      data: product,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
 export default {
   getProducts,
   createProduct,
   updateProduct,
+  deleteProduct,
 };

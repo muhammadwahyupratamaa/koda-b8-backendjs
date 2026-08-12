@@ -17,5 +17,5 @@ router.get("/test", adminMiddleware, (req, res) => {
 router.get("/products", adminController.getProducts);
 router.post("/products", adminController.createProduct);
 router.put("/products/:id", adminController.updateProduct);
-
+router.delete("/products/:id", adminController.deleteProduct);
 export default router;
