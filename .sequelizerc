@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 
 require("@babel/register");
 
-export const config = path.resolve("src", "config", "db.json");
+export const config = path.resolve("src", "config", "sequelize-cli.cjs");
 export const migrationsPath = path.resolve("src", "migrations");
 export const seedersPath = path.resolve("src", "seeders");
 export const modelsPath = path.resolve("src", "models");
