@@ -23,6 +23,36 @@ async function getProducts(req, res) {
   }
 }
 
+async function getProductByID(req, res) {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findByPk(id, {
+      include: {
+        model: Category,
+        attributes: ["name"],
+      },
+    });
+
+    if (!product) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "Product Not Found",
+      });
+    }
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 async function createProduct(req, res) {
   try {
     const newProduct = await Product.create(req.body);
@@ -125,6 +155,7 @@ async function deleteProduct(req, res) {
 }
 export default {
   getProducts,
+  getProductByID,
   createProduct,
   updateProduct,
   deleteProduct,
