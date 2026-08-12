@@ -22,6 +22,24 @@ async function getProducts(req, res) {
     });
   }
 }
+
+async function createProduct(req, res) {
+  try {
+    const newProduct = await Product.create(req.body);
+
+    return res.status(constants.HTTP_STATUS_CREATED).json({
+      success: true,
+      message: "Create Product Successfully",
+      data: newProduct,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
 export default {
   getProducts,
+  createProduct,
 };
