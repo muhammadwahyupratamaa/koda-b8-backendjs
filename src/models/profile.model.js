@@ -1,22 +1,18 @@
-import pool from "../config/db.js";
+import User from "./user.js";
 
 async function getProfile(userId) {
-  const query = `
-    SELECT
-      id,
-      name,
-      email,
-      phone,
-      birth_date,
-      gender,
-      avatar_url,
-      created_at
-    FROM users
-    WHERE id = $1;
-  `;
-
-  const result = await pool.query(query, [userId]);
-  return result.rows[0];
+  return await User.findByPk(userId, {
+    attributes: [
+      "id",
+      "name",
+      "email",
+      "phone",
+      "birth_date",
+      "gender",
+      "avatar_url",
+      "created_at",
+    ],
+  });
 }
 
 async function updateProfile(
@@ -28,60 +24,46 @@ async function updateProfile(
   gender,
   avatarUrl,
 ) {
-  const query = `
-    UPDATE users
-    SET
-      name = $2,
-      email = $3,
-      phone = $4,
-      birth_date = $5,
-      gender = $6,
-      avatar_url = COALESCE($7, avatar_url)
-    WHERE id = $1
-    RETURNING
-      id,
-      name,
-      email,
-      phone,
-      birth_date,
-      gender,
-      avatar_url,
-      created_at;
-  `;
+  const user = await User.findByPk(userId);
 
-  const result = await pool.query(query, [
-    userId,
-    name,
-    email,
-    phone,
-    birthDate,
-    gender,
-    avatarUrl,
-  ]);
+  if (!user) {
+    return null;
+  }
 
-  return result.rows[0];
+  user.name = name;
+  user.email = email;
+  user.phone = phone;
+  user.birth_date = birthDate;
+  user.gender = gender;
+
+  if (avatarUrl !== undefined) {
+    user.avatar_url = avatarUrl;
+  }
+
+  await user.save();
+
+  return user;
 }
 
 async function updatePassword(userId, password) {
-  const query = `
-    UPDATE users
-    SET password=$2
-    WHERE id =$1
-    RETURNING id;
-    `;
+  const user = await User.findByPk(userId);
 
-  const result = await pool.query(query, [userId, password]);
+  if (!user) {
+    return null;
+  }
 
-  return result.rows[0];
+  user.password = password;
+  await user.save();
+
+  return {
+    id: user.id,
+  };
 }
 
 async function getPassword(userId) {
-  const query = `
-    SELECT password FROM users
-    WHERE id=$1`;
-
-  const result = await pool.query(query, [userId]);
-  return result.rows[0];
+  return await User.findByPk(userId, {
+    attributes: ["password"],
+  });
 }
 
 export default {

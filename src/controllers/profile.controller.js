@@ -1,6 +1,7 @@
 import { constants } from "node:http2";
 import profileModel from "../models/profile.model.js";
 import bcrypt from "bcrypt";
+import { UniqueConstraintError } from "sequelize";
 
 /**
  *
@@ -57,7 +58,7 @@ async function updateProfile(req, res) {
       data: profile,
     });
   } catch (error) {
-    if (error.code === "23505") {
+    if (error instanceof UniqueConstraintError) {
       return res.status(constants.HTTP_STATUS_CONFLICT).json({
         success: false,
         message: "Email sudah digunakan",
@@ -81,7 +82,16 @@ async function updatePassword(req, res) {
   try {
     const userId = req.user.id;
     const { oldPassword, newPassword } = req.body;
+
     const user = await profileModel.getPassword(userId);
+
+    if (!user) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     const isMatch = await bcrypt.compare(oldPassword, user.password);
 
     if (!isMatch) {
@@ -90,8 +100,10 @@ async function updatePassword(req, res) {
         message: "old password is incorrect",
       });
     }
-    const hashedpassword = await bcrypt.hash(newPassword, 10);
-    await profileModel.updatePassword(userId, hashedpassword);
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await profileModel.updatePassword(userId, hashedPassword);
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
