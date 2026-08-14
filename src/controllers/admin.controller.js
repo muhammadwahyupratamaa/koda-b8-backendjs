@@ -1,5 +1,5 @@
 import { constants } from "node:http2";
-import { Category, Product } from "../models/index.js";
+import { Category, Product, Order, OrderItem } from "../models/index.js";
 
 async function getProducts(req, res) {
   try {
@@ -153,10 +153,40 @@ async function deleteProduct(req, res) {
     });
   }
 }
+
+async function getOrders(req, res) {
+  try {
+    const orders = await Order.findAll({
+      include: [
+        {
+          model: OrderItem,
+          attributes: ["id", "product_id", "quantity", "price", "subtotal"],
+          include: {
+            model: Product,
+            attributes: ["name", "image_url"],
+          },
+        },
+      ],
+      order: [["created_at", "DESC"]],
+    });
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      data: orders,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 export default {
   getProducts,
   getProductByID,
   createProduct,
   updateProduct,
   deleteProduct,
+  getOrders,
 };
