@@ -1,40 +1,25 @@
-import pool from "../config/db.js";
+import { Cart, CartItem, Product } from "./index.js";
 
 async function getCart(userId) {
-  const query = `
-    SELECT *
-    FROM carts
-    WHERE user_id = $1
-  `;
-
-  const result = await pool.query(query, [userId]);
-
-  return result.rows[0];
+  return await Cart.findOne({
+    where: {
+      user_id: userId,
+    },
+  });
 }
 
 async function createCart(userId) {
-  const query = `
-    INSERT INTO carts (user_id)
-    VALUES ($1)
-    RETURNING *;
-  `;
-
-  const result = await pool.query(query, [userId]);
-
-  return result.rows[0];
+  return await Cart.create({
+    user_id: userId,
+  });
 }
 
 async function addProduct(cartId, productId, color) {
   const normalizedColor = color ?? null;
 
-  const productQuery = `
-    SELECT id, stock
-    FROM products
-    WHERE id = $1;
-  `;
-
-  const productResult = await pool.query(productQuery, [productId]);
-  const product = productResult.rows[0];
+  const product = await Product.findByPk(productId, {
+    attributes: ["id", "stock"],
+  });
 
   if (!product) {
     const error = new Error("Produk tidak ditemukan");
@@ -48,142 +33,124 @@ async function addProduct(cartId, productId, color) {
     throw error;
   }
 
-  const checkQuery = `
-    SELECT *
-    FROM cart_items
-    WHERE cart_id = $1
-      AND product_id = $2
-      AND (
-        color = $3
-        OR (color IS NULL AND $3 IS NULL)
-      );
-  `;
+  const cartItem = await CartItem.findOne({
+    where: {
+      cart_id: cartId,
+      product_id: productId,
+      color: normalizedColor,
+    },
+  });
 
-  const check = await pool.query(checkQuery, [
-    cartId,
-    productId,
-    normalizedColor,
-  ]);
-
-  if (check.rows.length > 0) {
-    const currentItem = check.rows[0];
-
-    if (currentItem.quantity >= product.stock) {
+  if (cartItem) {
+    if (cartItem.quantity >= product.stock) {
       const error = new Error("Jumlah produk sudah mencapai stock");
       error.code = "STOCK_INSUFFICIENT";
       throw error;
     }
 
-    const updateQuery = `
-      UPDATE cart_items
-      SET quantity = quantity + 1,
-          updated_at = NOW()
-      WHERE id = $1
-      RETURNING *;
-    `;
+    cartItem.quantity += 1;
 
-    const updated = await pool.query(updateQuery, [
-      currentItem.id,
-    ]);
+    await cartItem.save();
 
-    return updated.rows[0];
+    return cartItem;
   }
 
-  const insertQuery = `
-    INSERT INTO cart_items (
-      cart_id,
-      product_id,
-      color
-    )
-    VALUES ($1, $2, $3)
-    RETURNING *;
-  `;
-
-  const inserted = await pool.query(insertQuery, [
-    cartId,
-    productId,
-    normalizedColor,
-  ]);
-
-  return inserted.rows[0];
+  return await CartItem.create({
+    cart_id: cartId,
+    product_id: productId,
+    color: normalizedColor,
+  });
 }
 
 async function updateQuantity(cartId, cartItemId, quantity) {
-  const query = `
-    UPDATE cart_items ci
-    SET quantity = $3,
-        updated_at = NOW()
-    FROM products p
-    WHERE ci.cart_id = $1
-      AND ci.id = $2
-      AND ci.product_id = p.id
-      AND $3 > 0
-      AND $3 <= p.stock
-    RETURNING ci.*;
-  `;
+  const cartItem = await CartItem.findOne({
+    where: {
+      cart_id: cartId,
+      id: cartItemId,
+    },
+  });
 
-  const result = await pool.query(query, [cartId, cartItemId, quantity]);
+  if (!cartItem) {
+    return null;
+  }
 
-  return result.rows[0];
+  cartItem.quantity = quantity;
+
+  await cartItem.save();
+
+  return cartItem;
 }
 
 async function getCartItem(cartId, cartItemId) {
-  const query = `
-    SELECT
-      ci.*,
-      p.stock
-    FROM cart_items ci
-    JOIN products p
-      ON ci.product_id = p.id
-    WHERE ci.cart_id = $1
-      AND ci.id = $2;
-  `;
+  const cartItem = await CartItem.findOne({
+    where: {
+      cart_id: cartId,
+      id: cartItemId,
+    },
+    include: {
+      model: Product,
+      attributes: ["stock"],
+    },
+  });
 
-  const result = await pool.query(query, [cartId, cartItemId]);
+  if (!cartItem) {
+    return null;
+  }
 
-  return result.rows[0];
+  return {
+    ...cartItem.toJSON(),
+    stock: cartItem.Product.stock,
+  };
 }
 
 async function removeProduct(cartId, cartItemId) {
-  const query = `
-    DELETE FROM cart_items
-    WHERE cart_id = $1
-      AND id = $2
-    RETURNING *;
-  `;
+  const cartItem = await CartItem.findOne({
+    where: {
+      cart_id: cartId,
+      id: cartItemId,
+    },
+  });
 
-  const result = await pool.query(query, [cartId, cartItemId]);
+  if (!cartItem) {
+    return null;
+  }
 
-  return result.rows[0];
+  await cartItem.destroy();
+
+  return cartItem;
 }
+
 async function getAll(cartId) {
-  const query = `
-    SELECT
-      ci.id,
-      ci.quantity,
-      ci.color,
+  return await CartItem.findAll({
+    where: {
+      cart_id: cartId,
+    },
 
-      p.id AS product_id,
-      p.name,
-      p.brand,
-      p.price,
-      p.price_disc,
-      p.discount,
-      p.image_url,
-      p.stock
+    attributes: [
+      "id",
+      "quantity",
+      "color",
+      "product_id",
+      ["created_at", "created_at"],
+    ],
 
-    FROM cart_items ci
-    JOIN products p
-      ON ci.product_id = p.id
+    include: {
+      model: Product,
+      attributes: [
+        "name",
+        "brand",
+        "price",
+        "price_disc",
+        "discount",
+        "image_url",
+        "stock",
+      ],
+    },
 
-    WHERE ci.cart_id = $1
+    order: [["created_at", "DESC"]],
 
-    ORDER BY ci.created_at DESC;
-  `;
-
-  const result = await pool.query(query, [cartId]);
-
-  return result.rows;
+    raw: true,
+  });
 }
 
 export default {
