@@ -5,6 +5,8 @@ import Product from "./product.js";
 import Wishlist from "./wishlist.js";
 import Cart from "./cart.js";
 import CartItem from "./cartItem.js";
+import Order from "./order.js";
+import OrderItem from "./orderItem.js";
 
 User.hasMany(Address, {
   foreignKey: "user_id",
@@ -54,6 +56,30 @@ CartItem.belongsTo(Product, {
   foreignKey: "product_id",
 });
 
+User.hasMany(Order, {
+  foreignKey: "user_id",
+});
+
+Order.belongsTo(User, {
+  foreignKey: "user_id",
+});
+
+Order.hasMany(OrderItem, {
+  foreignKey: "order_id",
+});
+
+OrderItem.belongsTo(Order, {
+  foreignKey: "order_id",
+});
+
+Product.hasMany(OrderItem, {
+  foreignKey: "product_id",
+});
+
+OrderItem.belongsTo(Product, {
+  foreignKey: "product_id",
+});
+
 Category.hasMany(Product, {
   foreignKey: "category_id",
 });
@@ -62,4 +88,14 @@ Product.belongsTo(Category, {
   foreignKey: "category_id",
 });
 
-export { User, Address, Category, Product, Wishlist, Cart, CartItem };
+export {
+  User,
+  Address,
+  Category,
+  Product,
+  Wishlist,
+  Cart,
+  CartItem,
+  Order,
+  OrderItem,
+};
