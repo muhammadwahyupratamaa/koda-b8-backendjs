@@ -1,3 +1,4 @@
+import sequelize from "../config/sequelize.js";
 import { Cart, CartItem, Product } from "./index.js";
 
 async function getCart(userId) {
@@ -131,20 +132,18 @@ async function getAll(cartId) {
       "quantity",
       "color",
       "product_id",
-      ["created_at", "created_at"],
+      [sequelize.col("Product.name"), "name"],
+      [sequelize.col("Product.brand"), "brand"],
+      [sequelize.col("Product.price"), "price"],
+      [sequelize.col("Product.price_disc"), "price_disc"],
+      [sequelize.col("Product.discount"), "discount"],
+      [sequelize.col("Product.image_url"), "image_url"],
+      [sequelize.col("Product.stock"), "stock"],
     ],
 
     include: {
       model: Product,
-      attributes: [
-        "name",
-        "brand",
-        "price",
-        "price_disc",
-        "discount",
-        "image_url",
-        "stock",
-      ],
+      attributes: [],
     },
 
     order: [["created_at", "DESC"]],
