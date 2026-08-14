@@ -1,3 +1,4 @@
+import User from "./user.js";
 import Category from "./category.js";
 import Product from "./product.js";
 
@@ -9,4 +10,4 @@ Product.belongsTo(Category, {
   foreignKey: "category_id",
 });
 
-export { Category, Product };
+export { User, Category, Product };
