@@ -1,45 +1,58 @@
-import pool from "../config/db.js";
+import sequelize from "../config/sequelize.js";
+import { Wishlist, Product } from "./index.js";
 
 async function addProduct(userId, productId) {
-  const query = `
-    INSERT INTO wishlists (user_id, product_id) VALUES($1, $2) RETURNING *`;
-
-  const result = await pool.query(query, [userId, productId]);
-
-  return result.rows[0];
+  return await Wishlist.create({
+    user_id: userId,
+    product_id: productId,
+  });
 }
 
 async function removeProduct(userId, productId) {
-  const query = `
-    DELETE FROM wishlists WHERE user_id=$1 AND product_id=$2 RETURNING *`;
+  const wishlist = await Wishlist.findOne({
+    where: {
+      user_id: userId,
+      product_id: productId,
+    },
+  });
 
-  const result = await pool.query(query, [userId, productId]);
-  return result.rows[0];
+  if (!wishlist) {
+    return null;
+  }
+
+  await wishlist.destroy();
+
+  return wishlist;
 }
 
 async function getAll(userId) {
-  const query = `
-    SELECT
-      w.id,
-      p.id AS product_id,
-      p.name,
-      p.brand,
-      p.price,
-      p.price_disc,
-      p.discount,
-      p.rating,
-      p.review,
-      p.image_url
-    FROM wishlists w
-    JOIN products p
-      ON w.product_id = p.id
-    WHERE w.user_id = $1
-    ORDER BY w.created_at DESC;
-  `;
+  return await Wishlist.findAll({
+    where: {
+      user_id: userId,
+    },
 
-  const result = await pool.query(query, [userId]);
+    attributes: [
+      "id",
+      "product_id",
+      [sequelize.col("Product.name"), "name"],
+      [sequelize.col("Product.brand"), "brand"],
+      [sequelize.col("Product.price"), "price"],
+      [sequelize.col("Product.price_disc"), "price_disc"],
+      [sequelize.col("Product.discount"), "discount"],
+      [sequelize.col("Product.rating"), "rating"],
+      [sequelize.col("Product.review"), "review"],
+      [sequelize.col("Product.image_url"), "image_url"],
+    ],
 
-  return result.rows;
+    include: {
+      model: Product,
+      attributes: [],
+    },
+
+    order: [["created_at", "DESC"]],
+
+    raw: true,
+  });
 }
 
 export default {

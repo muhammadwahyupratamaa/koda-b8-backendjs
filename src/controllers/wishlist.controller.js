@@ -1,5 +1,6 @@
 import wishlistModel from "../models/wishlist.model.js";
 import { constants } from "node:http2";
+import { UniqueConstraintError } from "sequelize";
 
 /**
  *
@@ -11,6 +12,7 @@ async function addProduct(req, res) {
   try {
     const userId = req.user.id;
     const { productId } = req.body;
+
     const wishlist = await wishlistModel.addProduct(userId, productId);
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
@@ -18,7 +20,7 @@ async function addProduct(req, res) {
       data: wishlist,
     });
   } catch (error) {
-    if (error.code === "23505") {
+    if (error instanceof UniqueConstraintError) {
       return res.status(constants.HTTP_STATUS_CONFLICT).json({
         success: false,
         message: "Produk sudah ada di wishlist",
@@ -73,6 +75,7 @@ async function removeProduct(req, res) {
 async function getAll(req, res) {
   try {
     const userId = req.user.id;
+
     const wishlist = await wishlistModel.getAll(userId);
 
     return res.status(constants.HTTP_STATUS_OK).json({
