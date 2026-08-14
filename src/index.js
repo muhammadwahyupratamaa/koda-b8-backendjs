@@ -5,6 +5,8 @@ import swaggerSpec from "./config/swagger.js";
 import corsMiddleware from "./middlewares/cors.middleware.js";
 import path from "path";
 import sequelize from "./config/sequelize.js";
+import http from "http";
+import { initWebSocket } from "./websocket/index.js";
 
 const app = express();
 
@@ -32,6 +34,10 @@ app.get("/health", (req, res) => {
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+initWebSocket(server);
+
+server.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });
