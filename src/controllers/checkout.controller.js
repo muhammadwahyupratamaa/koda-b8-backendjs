@@ -2,6 +2,7 @@ import { constants } from "node:http2";
 import sequelize from "../config/sequelize.js";
 import cartModel from "../models/cart.model.js";
 import checkoutModel from "../models/checkout.model.js";
+import { broadcast } from "../websocket/index.js";
 
 /**
  * @param {import("express").Request} req
@@ -78,6 +79,10 @@ async function checkout(req, res) {
 
       return newOrder;
     });
+
+    // Transaction sudah berhasil COMMIT.
+    // Baru broadcast order ke WebSocket admin.
+    broadcast("order_created", order);
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
