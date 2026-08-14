@@ -1,22 +1,19 @@
-import pool from "../config/db.js";
+import { Op } from "sequelize";
+import { CartItem, Product, Order, OrderItem } from "./index.js";
 
-async function getCartItems(cartId, client = pool) {
-  const query = `
-    SELECT
-      ci.product_id,
-      ci.quantity,
-      p.price,
-      p.stock
-    FROM cart_items ci
-    JOIN products p
-      ON ci.product_id = p.id
-    WHERE ci.cart_id = $1
-    FOR UPDATE OF p;
-  `;
-
-  const result = await client.query(query, [cartId]);
-
-  return result.rows;
+async function getCartItems(cartId, transaction) {
+  return await CartItem.findAll({
+    where: {
+      cart_id: cartId,
+    },
+    attributes: ["product_id", "quantity"],
+    include: {
+      model: Product,
+      attributes: ["id", "price", "stock"],
+      required: true,
+    },
+    transaction,
+  });
 }
 
 async function createOrder(
@@ -24,27 +21,19 @@ async function createOrder(
   total,
   shippingAddress,
   paymentMethod,
-  client = pool,
+  transaction,
 ) {
-  const query = `
-    INSERT INTO orders (
-      user_id,
+  return await Order.create(
+    {
+      user_id: userId,
       total,
-      shipping_address,
-      payment_method
-    )
-    VALUES ($1, $2, $3, $4)
-    RETURNING *;
-  `;
-
-  const result = await client.query(query, [
-    userId,
-    total,
-    shippingAddress,
-    paymentMethod,
-  ]);
-
-  return result.rows[0];
+      shipping_address: shippingAddress,
+      payment_method: paymentMethod,
+    },
+    {
+      transaction,
+    },
+  );
 }
 
 async function createOrderItem(
@@ -53,109 +42,100 @@ async function createOrderItem(
   quantity,
   price,
   subtotal,
-  client = pool,
+  transaction,
 ) {
-  const query = `
-    INSERT INTO order_items
-    (
-      order_id,
-      product_id,
+  return await OrderItem.create(
+    {
+      order_id: orderId,
+      product_id: productId,
       quantity,
       price,
-      subtotal
-    )
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING *;
-  `;
-
-  const result = await client.query(query, [
-    orderId,
-    productId,
-    quantity,
-    price,
-    subtotal,
-  ]);
-
-  return result.rows[0];
+      subtotal,
+    },
+    {
+      transaction,
+    },
+  );
 }
 
-async function decreaseStock(
-  productId,
-  quantity,
-  client = pool,
-) {
-  const query = `
-    UPDATE products
-    SET stock = stock - $2
-    WHERE id = $1
-    RETURNING *;
-  `;
+async function decreaseStock(productId, quantity, transaction) {
+  const product = await Product.findByPk(productId, {
+    transaction,
+    lock: transaction.LOCK.UPDATE,
+  });
 
-  const result = await client.query(query, [
-    productId,
-    quantity,
-  ]);
+  if (!product) {
+    throw new Error("Produk tidak ditemukan");
+  }
 
-  return result.rows[0];
+  if (product.stock < quantity) {
+    const error = new Error("Stock produk tidak cukup");
+    error.code = "STOCK_INSUFFICIENT";
+    throw error;
+  }
+
+  product.stock -= quantity;
+
+  await product.save({
+    transaction,
+  });
+
+  return product;
 }
 
-async function clearCart(cartId, client = pool) {
-  const query = `
-    DELETE FROM cart_items
-    WHERE cart_id = $1;
-  `;
+async function clearCart(cartId, transaction) {
+  await CartItem.destroy({
+    where: {
+      cart_id: cartId,
+    },
 
-  await client.query(query, [cartId]);
+    transaction,
+  });
 }
 
 async function getOrders(userId) {
-  const query = `
-    SELECT
-      o.id,
-      o.total,
-      o.status,
-      o.created_at,
+  const orderItems = await OrderItem.findAll({
+    attributes: ["id", "order_id", "quantity", "price", "subtotal"],
 
-      oi.quantity,
-      oi.price,
-      oi.subtotal,
+    include: [
+      {
+        model: Order,
+        where: {
+          user_id: userId,
+        },
+        attributes: ["id", "total", "status", "created_at"],
+      },
+      {
+        model: Product,
+        attributes: ["name", "image_url"],
+      },
+    ],
 
-      p.name,
-      p.image_url
+    order: [[Order, "created_at", "DESC"]],
 
-    FROM orders o
-
-    JOIN order_items oi
-      ON oi.order_id = o.id
-
-    JOIN products p
-      ON p.id = oi.product_id
-
-    WHERE o.user_id = $1
-
-    ORDER BY o.created_at DESC;
-  `;
-
-  const result = await pool.query(query, [userId]);
+    raw: true,
+  });
 
   const orders = [];
 
-  for (const row of result.rows) {
-    let order = orders.find((o) => o.id === row.id);
+  for (const row of orderItems) {
+    let order = orders.find(
+      (item) => String(item.id) === String(row["Order.id"]),
+    );
 
     if (!order) {
       let status = "Diproses";
 
-      if (row.status === "shipped") {
+      if (row["Order.status"] === "shipped") {
         status = "Dikirim";
-      } else if (row.status === "delivered") {
+      } else if (row["Order.status"] === "delivered") {
         status = "Terkirim";
       }
 
       order = {
-        id: row.id,
-        total: row.total,
-        created_at: row.created_at,
+        id: row["Order.id"],
+        total: row["Order.total"],
+        created_at: row["Order.created_at"],
         status,
         items: [],
       };
@@ -164,8 +144,8 @@ async function getOrders(userId) {
     }
 
     order.items.push({
-      name: row.name,
-      image_url: row.image_url,
+      name: row["Product.name"],
+      image_url: row["Product.image_url"],
       quantity: row.quantity,
       price: row.price,
       subtotal: row.subtotal,

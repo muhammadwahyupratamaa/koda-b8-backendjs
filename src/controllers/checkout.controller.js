@@ -1,5 +1,5 @@
 import { constants } from "node:http2";
-import pool from "../config/db.js";
+import sequelize from "../config/sequelize.js";
 import cartModel from "../models/cart.model.js";
 import checkoutModel from "../models/checkout.model.js";
 
@@ -9,8 +9,6 @@ import checkoutModel from "../models/checkout.model.js";
  * @returns
  */
 async function checkout(req, res) {
-  const client = await pool.connect();
-
   try {
     const userId = req.user.id;
     const { shippingAddress, paymentMethod } = req.body;
@@ -24,62 +22,62 @@ async function checkout(req, res) {
       });
     }
 
-    await client.query("BEGIN");
+    const order = await sequelize.transaction(async (transaction) => {
+      const cartItems = await checkoutModel.getCartItems(cart.id, transaction);
 
-    const cartItems = await checkoutModel.getCartItems(cart.id, client);
-
-    if (cartItems.length === 0) {
-      await client.query("ROLLBACK");
-
-      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
-        success: false,
-        message: "Cart is empty",
-      });
-    }
-
-    for (const item of cartItems) {
-      if (item.stock < item.quantity) {
-        await client.query("ROLLBACK");
-
-        return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
-          success: false,
-          message: "Stock produk tidak cukup",
-        });
+      if (cartItems.length === 0) {
+        const error = new Error("Cart is empty");
+        error.code = "CART_EMPTY";
+        throw error;
       }
-    }
 
-    let total = 0;
+      let total = 0;
 
-    for (const item of cartItems) {
-      total += Number(item.price) * item.quantity;
-    }
+      for (const item of cartItems) {
+        const stock = item.Product.stock;
+        const quantity = item.quantity;
 
-    const order = await checkoutModel.createOrder(
-      userId,
-      total,
-      shippingAddress,
-      paymentMethod,
-      client,
-    );
+        if (stock < quantity) {
+          const error = new Error("Stock produk tidak cukup");
+          error.code = "STOCK_INSUFFICIENT";
+          throw error;
+        }
 
-    for (const item of cartItems) {
-      const subtotal = Number(item.price) * item.quantity;
+        total += Number(item.Product.price) * quantity;
+      }
 
-      await checkoutModel.createOrderItem(
-        order.id,
-        item.product_id,
-        item.quantity,
-        item.price,
-        subtotal,
-        client,
+      const newOrder = await checkoutModel.createOrder(
+        userId,
+        total,
+        shippingAddress,
+        paymentMethod,
+        transaction,
       );
 
-      await checkoutModel.decreaseStock(item.product_id, item.quantity, client);
-    }
+      for (const item of cartItems) {
+        const price = Number(item.Product.price);
+        const subtotal = price * item.quantity;
 
-    await checkoutModel.clearCart(cart.id, client);
+        await checkoutModel.createOrderItem(
+          newOrder.id,
+          item.product_id,
+          item.quantity,
+          price,
+          subtotal,
+          transaction,
+        );
 
-    await client.query("COMMIT");
+        await checkoutModel.decreaseStock(
+          item.product_id,
+          item.quantity,
+          transaction,
+        );
+      }
+
+      await checkoutModel.clearCart(cart.id, transaction);
+
+      return newOrder;
+    });
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
@@ -87,9 +85,21 @@ async function checkout(req, res) {
       data: order,
     });
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (error.code === "CART_EMPTY") {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "Cart is empty",
+      });
+    }
 
-    if (error.code === "23505") {
+    if (error.code === "STOCK_INSUFFICIENT") {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "Stock produk tidak cukup",
+      });
+    }
+
+    if (error.name === "SequelizeUniqueConstraintError") {
       return res.status(constants.HTTP_STATUS_CONFLICT).json({
         success: false,
         message: "Data sudah ada",
@@ -100,8 +110,6 @@ async function checkout(req, res) {
       success: false,
       message: error.message,
     });
-  } finally {
-    client.release();
   }
 }
 
