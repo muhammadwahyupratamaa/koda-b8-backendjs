@@ -2,6 +2,7 @@ import { constants } from "node:http2";
 import profileModel from "../models/profile.model.js";
 import bcrypt from "bcrypt";
 import { UniqueConstraintError } from "sequelize";
+import cloudinary from "../config/cloudinary.js";
 
 /**
  *
@@ -38,9 +39,12 @@ async function updateProfile(req, res) {
 
     const { name, email, phone, birthDate, gender } = req.body;
 
-    const avatarUrl = req.file
-      ? `/uploads/profile/${req.file.filename}`
-      : undefined;
+    let avatarUrl;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+      avatarUrl = result.secure_url;
+    }
 
     const profile = await profileModel.updateProfile(
       userId,
@@ -70,6 +74,26 @@ async function updateProfile(req, res) {
       message: error.message,
     });
   }
+}
+
+function uploadToCloudinary(fileBuffer) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "brilianshop/profile",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      },
+    );
+
+    stream.end(fileBuffer);
+  });
 }
 
 /**
