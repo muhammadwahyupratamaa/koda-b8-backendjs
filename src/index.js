@@ -1,13 +1,13 @@
-import pool from "./config/db.js";
 import express from "express";
 import routes from "./routes/index.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import corsMiddleware from "./middlewares/cors.middleware.js";
 import path from "path";
+import sequelize from "./config/sequelize.js";
 
 const app = express();
-// console.log(corsmiddleware);
+
 app.use(express.json());
 
 app.use("/uploads", express.static(path.resolve("uploads")));
@@ -15,10 +15,10 @@ app.use(corsMiddleware);
 app.use(routes);
 
 try {
-  await pool.query("SELECT NOW()");
+  await sequelize.authenticate();
   console.log("database Connected");
 } catch (error) {
-  console.error(error.message);
+  console.error("Database connection failed:", error.message);
 }
 
 const PORT = process.env.PORT || 8081;
