@@ -188,7 +188,7 @@ async function updateOrderStatus(req, res) {
     const { id } = req.params;
     const { status } = req.body;
 
-    const allowedStatus = ["pending", "shipped", "delivered"];
+    const allowedStatus = ["pending", "processing", "shipped", "delivered"];
 
     if (!allowedStatus.includes(status)) {
       return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
