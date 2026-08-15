@@ -1,6 +1,6 @@
 import { constants } from "node:http2";
 import { Category, Product, Order, OrderItem } from "../models/index.js";
-import { broadcast } from "../websocket/index.js";
+import { broadcast, broadcastToUser } from "../websocket/index.js";
 
 async function getProducts(req, res) {
   try {
@@ -234,7 +234,11 @@ async function updateOrderStatus(req, res) {
       status,
     });
 
+    // Update semua admin yang sedang membuka panel
     broadcast("order_status_updated", order);
+
+    // Update user pemilik order secara realtime
+    broadcastToUser(order.user_id, "order_status_updated", order);
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
