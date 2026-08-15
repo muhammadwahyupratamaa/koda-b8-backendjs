@@ -364,6 +364,54 @@ async function getProductStatistics(req, res) {
   }
 }
 
+async function getOrderStatistics(req, res) {
+  try {
+    const [total, pending, processing, shipped, delivered] = await Promise.all([
+      Order.count(),
+
+      Order.count({
+        where: {
+          status: "pending",
+        },
+      }),
+
+      Order.count({
+        where: {
+          status: "processing",
+        },
+      }),
+
+      Order.count({
+        where: {
+          status: "shipped",
+        },
+      }),
+
+      Order.count({
+        where: {
+          status: "delivered",
+        },
+      }),
+    ]);
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      data: {
+        total,
+        pending,
+        processing,
+        shipped,
+        delivered,
+      },
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 export default {
   getProducts,
   getProductByID,
@@ -373,4 +421,5 @@ export default {
   getOrders,
   updateOrderStatus,
   getProductStatistics,
+  getOrderStatistics,
 };

@@ -60,6 +60,8 @@ router.get("/products", adminController.getProducts);
 
 router.get("/orders", adminController.getOrders);
 
+router.get("/orders/statistics", adminController.getOrderStatistics);
+
 router.patch("/orders/:id/status", adminController.updateOrderStatus);
 
 router.get("/products/statistics", adminController.getProductStatistics);
