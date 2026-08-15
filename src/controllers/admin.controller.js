@@ -1,7 +1,7 @@
 import { constants } from "node:http2";
 import { Category, Product, Order, OrderItem } from "../models/index.js";
 import { broadcast, broadcastToUser } from "../websocket/index.js";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 
 async function getProducts(req, res) {
   try {
@@ -220,7 +220,53 @@ async function deleteProduct(req, res) {
 
 async function getOrders(req, res) {
   try {
-    const orders = await Order.findAll({
+    const { search = "", status = "", page = 1, limit = 10 } = req.query;
+
+    const currentPage = Math.max(Number(page) || 1, 1);
+    const perPage = Math.min(Math.max(Number(limit) || 10, 1), 100);
+
+    const offset = (currentPage - 1) * perPage;
+
+    const where = {};
+
+    if (status && status !== "all") {
+      const allowedStatus = ["pending", "processing", "shipped", "delivered"];
+
+      if (allowedStatus.includes(status)) {
+        where.status = status;
+      }
+    }
+
+    if (search.trim()) {
+      const keyword = search.trim();
+
+      const searchConditions = [
+        Sequelize.where(Sequelize.cast(Sequelize.col("Order.id"), "TEXT"), {
+          [Op.iLike]: `%${keyword}%`,
+        }),
+
+        Sequelize.where(
+          Sequelize.cast(Sequelize.col("Order.user_id"), "TEXT"),
+          {
+            [Op.iLike]: `%${keyword}%`,
+          },
+        ),
+
+        Sequelize.where(Sequelize.json("shipping_address.name"), {
+          [Op.iLike]: `%${keyword}%`,
+        }),
+
+        Sequelize.where(Sequelize.json("shipping_address.email"), {
+          [Op.iLike]: `%${keyword}%`,
+        }),
+      ];
+
+      where[Op.or] = searchConditions;
+    }
+
+    const { count, rows } = await Order.findAndCountAll({
+      where,
+
       include: [
         {
           model: OrderItem,
@@ -231,14 +277,27 @@ async function getOrders(req, res) {
           },
         },
       ],
+
       order: [["created_at", "DESC"]],
+
+      limit: perPage,
+      offset,
+      distinct: true,
     });
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
-      data: orders,
+      data: rows,
+      pagination: {
+        page: currentPage,
+        limit: perPage,
+        total: count,
+        totalPages: Math.ceil(count / perPage),
+      },
     });
   } catch (error) {
+    console.error("GET ADMIN ORDERS ERROR:", error);
+
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,
