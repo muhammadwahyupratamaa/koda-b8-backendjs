@@ -62,6 +62,8 @@ router.get("/orders", adminController.getOrders);
 
 router.patch("/orders/:id/status", adminController.updateOrderStatus);
 
+router.get("/products/statistics", adminController.getProductStatistics);
+
 /**
  * @openapi
  * /admin/products/{id}:

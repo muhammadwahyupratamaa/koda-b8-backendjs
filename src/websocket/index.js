@@ -20,29 +20,25 @@ export function initWebSocket(server) {
 
       const payload = libJwt.verify(token);
 
-      if (payload.role !== "admin") {
-        ws.close(1008, "Forbidden");
-        return;
-      }
-
       ws.user = payload;
 
-      console.log(`Admin WebSocket connected: ${payload.id}`);
+      console.log(`WebSocket connected: ${payload.role} ${payload.id}`);
 
       ws.send(
         JSON.stringify({
           event: "connected",
           data: {
-            message: "Admin WebSocket connected",
+            message: `${payload.role} WebSocket connected`,
           },
         }),
       );
 
       ws.on("close", () => {
-        console.log(`Admin WebSocket disconnected: ${payload.id}`);
+        console.log(`WebSocket disconnected: ${payload.role} ${payload.id}`);
       });
     } catch (error) {
       console.error("WebSocket authentication failed:", error.message);
+
       ws.close(1008, "Unauthorized");
     }
   });
@@ -60,6 +56,21 @@ export function broadcast(event, data) {
 
   wss.clients.forEach((client) => {
     if (client.readyState === 1 && client.user?.role === "admin") {
+      client.send(message);
+    }
+  });
+}
+
+export function broadcastToUser(userId, event, data) {
+  if (!wss) return;
+
+  const message = JSON.stringify({
+    event,
+    data,
+  });
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1 && String(client.user?.id) === String(userId)) {
       client.send(message);
     }
   });

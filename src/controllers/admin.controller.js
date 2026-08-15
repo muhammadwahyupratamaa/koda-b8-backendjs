@@ -1,20 +1,83 @@
 import { constants } from "node:http2";
 import { Category, Product, Order, OrderItem } from "../models/index.js";
 import { broadcast, broadcastToUser } from "../websocket/index.js";
+import { Op } from "sequelize";
 
 async function getProducts(req, res) {
   try {
-    const product = await Product.findAll({
+    const {
+      search = "",
+      category_id,
+      status,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const currentPage = Math.max(Number(page), 1);
+    const perPage = Math.min(Math.max(Number(limit), 1), 100);
+
+    const offset = (currentPage - 1) * perPage;
+
+    const where = {};
+
+    if (search.trim()) {
+      where[Op.or] = [
+        {
+          name: {
+            [Op.iLike]: `%${search.trim()}%`,
+          },
+        },
+        {
+          brand: {
+            [Op.iLike]: `%${search.trim()}%`,
+          },
+        },
+      ];
+    }
+
+    if (category_id) {
+      where.category_id = category_id;
+    }
+
+    if (status === "active") {
+      where.stock = {
+        [Op.gt]: 0,
+      };
+    }
+
+    if (status === "promo") {
+      where.price_disc = {
+        [Op.gt]: 0,
+      };
+    }
+
+    if (status === "inactive") {
+      where.stock = 0;
+    }
+
+    const { count, rows } = await Product.findAndCountAll({
+      where,
+
       include: {
         model: Category,
         attributes: ["name"],
       },
+
       order: [["id", "DESC"]],
+
+      limit: perPage,
+      offset,
     });
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
-      data: product,
+      data: rows,
+      pagination: {
+        page: currentPage,
+        limit: perPage,
+        total: count,
+        totalPages: Math.ceil(count / perPage),
+      },
     });
   } catch (error) {
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
@@ -253,6 +316,54 @@ async function updateOrderStatus(req, res) {
   }
 }
 
+async function getProductStatistics(req, res) {
+  try {
+    const [total, active, lowStock, promo] = await Promise.all([
+      Product.count(),
+
+      Product.count({
+        where: {
+          stock: {
+            [Op.gt]: 0,
+          },
+        },
+      }),
+
+      Product.count({
+        where: {
+          stock: {
+            [Op.gt]: 0,
+            [Op.lte]: 10,
+          },
+        },
+      }),
+
+      Product.count({
+        where: {
+          price_disc: {
+            [Op.gt]: 0,
+          },
+        },
+      }),
+    ]);
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      data: {
+        total,
+        active,
+        lowStock,
+        promo,
+      },
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 export default {
   getProducts,
   getProductByID,
@@ -261,4 +372,5 @@ export default {
   deleteProduct,
   getOrders,
   updateOrderStatus,
+  getProductStatistics,
 };
