@@ -206,6 +206,30 @@ async function updateOrderStatus(req, res) {
       });
     }
 
+    const statusFlow = {
+      pending: "processing",
+      processing: "shipped",
+      shipped: "delivered",
+      delivered: null,
+    };
+
+    const currentStatus = order.status;
+    const nextStatus = statusFlow[currentStatus];
+
+    if (currentStatus === "delivered") {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "Order sudah terkirim",
+      });
+    }
+
+    if (status !== nextStatus) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: `Status harus berubah dari ${currentStatus} ke ${nextStatus}`,
+      });
+    }
+
     await order.update({
       status,
     });
