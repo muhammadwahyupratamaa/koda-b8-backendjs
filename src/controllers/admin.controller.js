@@ -1,5 +1,6 @@
 import { constants } from "node:http2";
 import { Category, Product, Order, OrderItem } from "../models/index.js";
+import { broadcast } from "../websocket/index.js";
 
 async function getProducts(req, res) {
   try {
@@ -182,6 +183,48 @@ async function getOrders(req, res) {
   }
 }
 
+async function updateOrderStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const allowedStatus = ["pending", "shipped", "delivered"];
+
+    if (!allowedStatus.includes(status)) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "Status tidak valid",
+      });
+    }
+
+    const order = await Order.findByPk(id);
+
+    if (!order) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "Order Not Found",
+      });
+    }
+
+    await order.update({
+      status,
+    });
+
+    broadcast("order_status_updated", order);
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      message: "Update Order Status Successfully",
+      data: order,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 export default {
   getProducts,
   getProductByID,
@@ -189,4 +232,5 @@ export default {
   updateProduct,
   deleteProduct,
   getOrders,
+  updateOrderStatus,
 };

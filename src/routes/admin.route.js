@@ -58,8 +58,9 @@ router.get("/test", adminMiddleware, (req, res) => {
  */
 router.get("/products", adminController.getProducts);
 
-
 router.get("/orders", adminController.getOrders);
+
+router.patch("/orders/:id/status", adminController.updateOrderStatus);
 
 /**
  * @openapi
