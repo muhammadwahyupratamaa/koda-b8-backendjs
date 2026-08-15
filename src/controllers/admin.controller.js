@@ -2,6 +2,7 @@ import { constants } from "node:http2";
 import { Category, Product, Order, OrderItem } from "../models/index.js";
 import { broadcast, broadcastToUser } from "../websocket/index.js";
 import { Op, Sequelize } from "sequelize";
+import cloudinary from "../config/cloudinary.js";
 
 async function getProducts(req, res) {
   try {
@@ -119,7 +120,44 @@ async function getProductByID(req, res) {
 
 async function createProduct(req, res) {
   try {
-    const newProduct = await Product.create(req.body);
+    const {
+      name,
+      brand,
+      category_id,
+      price,
+      price_disc,
+      discount,
+      rating,
+      review,
+      sold,
+      stock,
+      is_featured,
+      description,
+    } = req.body;
+
+    let imageUrl = null;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+
+      imageUrl = result.secure_url;
+    }
+
+    const newProduct = await Product.create({
+      name,
+      brand,
+      category_id,
+      price,
+      price_disc,
+      discount,
+      rating,
+      review,
+      sold,
+      stock,
+      is_featured,
+      image_url: imageUrl,
+      description,
+    });
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
@@ -137,6 +175,7 @@ async function createProduct(req, res) {
 async function updateProduct(req, res) {
   try {
     const { id } = req.params;
+
     const product = await Product.findByPk(id);
 
     if (!product) {
@@ -158,9 +197,16 @@ async function updateProduct(req, res) {
       sold,
       stock,
       is_featured,
-      image_url,
       description,
     } = req.body;
+
+    let imageUrl = product.image_url;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer);
+
+      imageUrl = result.secure_url;
+    }
 
     await product.update({
       name,
@@ -174,7 +220,7 @@ async function updateProduct(req, res) {
       sold,
       stock,
       is_featured,
-      image_url,
+      image_url: imageUrl,
       description,
     });
 
@@ -471,6 +517,26 @@ async function getOrderStatistics(req, res) {
   }
 }
 
+function uploadToCloudinary(fileBuffer) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "brilianshop/products",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      },
+    );
+
+    stream.end(fileBuffer);
+  });
+}
+
 export default {
   getProducts,
   getProductByID,
@@ -481,4 +547,5 @@ export default {
   updateOrderStatus,
   getProductStatistics,
   getOrderStatistics,
+  uploadToCloudinary,
 };
