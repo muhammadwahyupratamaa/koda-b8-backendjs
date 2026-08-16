@@ -9,7 +9,7 @@ import productModel from "../models/product.model.js";
  */
 async function getAll(req, res) {
   try {
-    const products = await productModel.getAll();
+    const products = await productModel.getAll(req.query);
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
