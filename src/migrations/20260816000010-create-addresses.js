@@ -3,13 +3,13 @@ import { DataTypes } from "sequelize";
 export async function up(queryInterface) {
   await queryInterface.createTable("addresses", {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
 
     user_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
 
