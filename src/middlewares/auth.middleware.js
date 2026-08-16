@@ -10,7 +10,6 @@ import libJwt from "../lib/jwt.js";
  */
 function authMiddleware(req, res, next) {
   const authorization = req.headers.authorization;
-  console.log(req.headers.authorization);
   if (!authorization) {
     return res.status(constants.HTTP_STATUS_UNAUTHORIZED).json({
       success: false,
