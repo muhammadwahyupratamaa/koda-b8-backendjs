@@ -69,7 +69,7 @@ export async function up(queryInterface) {
   await queryInterface.addConstraint("cart_items", {
     fields: ["cart_id", "product_id", "color"],
     type: "unique",
-    name: "unique_cart_product_color",
+    name: "unique_cart_product",
   });
 }
 
