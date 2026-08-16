@@ -37,6 +37,14 @@ export async function up(queryInterface) {
       updated_at: new Date("2026-08-05T16:35:48.721Z"),
     },
   ]);
+
+  await queryInterface.sequelize.query(`
+    SELECT setval(
+      pg_get_serial_sequence('"categories"', 'id'),
+      COALESCE((SELECT MAX(id) FROM "categories"), 1),
+      true
+    );
+  `);
 }
 
 export async function down(queryInterface) {
