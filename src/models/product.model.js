@@ -55,6 +55,10 @@ async function getAll({
     order = [["price", "DESC"]];
   }
 
+  if (sort === "popular") {
+    order = [["sold", "DESC"]];
+  }
+
   return await Product.findAll({
     where,
     attributes: {
