@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
   await queryInterface.addColumn("orders", "shipping_address", {
-    type: DataTypes.TEXT,
+    type: DataTypes.JSONB,
     allowNull: true,
   });
 
