@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "db:baseline": "node scripts/baseline-sequelize.js"
+    "db:baseline": "node scripts/baseline-sequelize.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand"
   },
   "repository": {
     "type": "git",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@babel/register": "^8.0.1",
+    "jest": "^30.4.2",
     "sequelize-cli": "^6.6.5"
   }
 }
