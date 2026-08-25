@@ -14,12 +14,18 @@ User.init(
     name: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      validate: {
+        len: [3, 100],
+      },
     },
 
     email: {
       type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
+      validate: {
+        isEmail: true,
+      },
     },
 
     password: {
@@ -40,6 +46,9 @@ User.init(
     gender: {
       type: DataTypes.STRING(10),
       allowNull: true,
+      validate: {
+        isIn: [["Laki-laki", "Perempuan"]],
+      },
     },
 
     avatar_url: {
@@ -51,6 +60,9 @@ User.init(
       type: DataTypes.STRING(20),
       allowNull: false,
       defaultValue: "user",
+      validate: {
+        isIn: [["user", "admin"]],
+      },
     },
   },
   {
@@ -58,7 +70,6 @@ User.init(
     modelName: "User",
     tableName: "users",
     underscored: true,
-
     timestamps: true,
     createdAt: "created_at",
     updatedAt: false,
