@@ -4,6 +4,14 @@ import { broadcast, broadcastToUser } from "../websocket/index.js";
 import { Op, Sequelize } from "sequelize";
 import cloudinary from "../config/cloudinary.js";
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getProducts(req, res) {
   try {
     const {
@@ -88,6 +96,14 @@ async function getProducts(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getProductByID(req, res) {
   try {
     const { id } = req.params;
@@ -118,6 +134,14 @@ async function getProductByID(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function createProduct(req, res) {
   try {
     const {
@@ -172,6 +196,14 @@ async function createProduct(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function updateProduct(req, res) {
   try {
     const { id } = req.params;
@@ -237,6 +269,14 @@ async function updateProduct(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
@@ -264,6 +304,14 @@ async function deleteProduct(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getOrders(req, res) {
   try {
     const { search = "", status = "", page = 1, limit = 10 } = req.query;
@@ -351,6 +399,14 @@ async function getOrders(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function updateOrderStatus(req, res) {
   try {
     const { id } = req.params;
@@ -421,6 +477,14 @@ async function updateOrderStatus(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getProductStatistics(req, res) {
   try {
     const [total, active, lowStock, promo] = await Promise.all([
@@ -469,6 +533,14 @@ async function getProductStatistics(req, res) {
   }
 }
 
+
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getOrderStatistics(req, res) {
   try {
     const [total, pending, processing, shipped, delivered] = await Promise.all([
