@@ -1,6 +1,13 @@
 import { constants } from "node:http2";
 import addressModel from "../models/address.model.js";
 
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getAll(req, res) {
   try {
     const userId = req.user.id;
@@ -19,6 +26,13 @@ async function getAll(req, res) {
   }
 }
 
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function getById(req, res) {
   try {
     const userId = req.user.id;
@@ -45,6 +59,13 @@ async function getById(req, res) {
   }
 }
 
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function create(req, res) {
   try {
     const userId = req.user.id;
@@ -74,6 +95,13 @@ async function create(req, res) {
   }
 }
 
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function update(req, res) {
   try {
     const userId = req.user.id;
@@ -109,6 +137,13 @@ async function update(req, res) {
   }
 }
 
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function remove(req, res) {
   try {
     const userId = req.user.id;
@@ -135,6 +170,13 @@ async function remove(req, res) {
   }
 }
 
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns
+ */
 async function setPrimary(req, res) {
   try {
     const userId = req.user.id;
